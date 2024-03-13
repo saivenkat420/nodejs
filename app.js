@@ -6,7 +6,7 @@ const {open} = require('sqlite')
 app.use(express.json())
 db_path = path.join(__dirname, 'cricketTeam.db')
 let db = null
-console.log(db_path)
+
 const intializeSeverDatabasae = async () => {
   try {
     db = await open({
@@ -21,6 +21,14 @@ const intializeSeverDatabasae = async () => {
     process.exit(1)
   }
 }
+const convertDbObjectToResponseObject = dbObject => {
+  return {
+    playerId: dbObject.player_id,
+    playerName: dbObject.player_name,
+    jerseyNumber: dbObject.jersey_number,
+    role: dbObject.role,
+  }
+}
 intializeSeverDatabasae()
 app.get('/players/', async (request, response) => {
   const getplayersquery = `
@@ -29,7 +37,9 @@ app.get('/players/', async (request, response) => {
   from 
   cricket_team;`
   const getplayers = await db.all(getplayersquery)
-  response.send(getplayers)
+  response.send(
+    getplayers.map(eachPlayer => convertDbObjectToResponseObject(eachPlayer)),
+  )
 })
 app.get('/players/:playerId/', async (request, response) => {
   const {playerId} = request.params
@@ -39,10 +49,8 @@ app.get('/players/:playerId/', async (request, response) => {
   from 
   cricket_team
   where player_id=${playerId};`
-  const getplayers = await db.all(getplayersquery)
-  response.send(
-    getplayers.map(eachPlayer => convertDbObjectToResponseObject(eachPlayer)),
-  )
+  const getplayer = await db.all(getplayersquery)
+  response.send(convertDbObjectToResponseObject(getplayer[0]))
 })
 app.post('/players/', async (request, response) => {
   const playerDetails = request.body
@@ -67,3 +75,4 @@ app.delete('/players/:playerId/', async (request, response) => {
   await db.run(deleteplayerquery)
   response.send('Player Removed')
 })
+module.exports = app
