@@ -31,6 +31,19 @@ app.get('/players/', async (request, response) => {
   const getplayers = await db.all(getplayersquery)
   response.send(getplayers)
 })
+app.get('/players/:playerId/', async (request, response) => {
+  const {playerId} = request.params
+  const getplayersquery = `
+  select 
+  * 
+  from 
+  cricket_team
+  where player_id=${playerId};`
+  const getplayers = await db.all(getplayersquery)
+  response.send(
+    getplayers.map(eachPlayer => convertDbObjectToResponseObject(eachPlayer)),
+  )
+})
 app.post('/players/', async (request, response) => {
   const playerDetails = request.body
   const {playerName, jerseyNumber, role} = playerDetails
